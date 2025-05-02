@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User";
+import User from "../models/User.js";
 
 // const response = await fetch("http://localhost:3000/api/books", {
 //   method: "POST",
@@ -34,7 +34,6 @@ const protectRoute = async (req, res, next) => {
 
     req.user = user; // attach user to the request object
     next(); // call the next middleware or route handler
-    
   } catch (error) {
     console.error("Error in protectRoute middleware", error);
     res.status(500).json({ message: "Internal Server error" });
