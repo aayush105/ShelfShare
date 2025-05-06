@@ -6,23 +6,34 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import React, { useState } from "react";
 import styles from "../../assets/styles/signup.styles";
 import { Ionicons } from "@expo/vector-icons";
 import COLORS from "../../constants/colors";
 import { Link, useRouter } from "expo-router";
+import { useAuthStore } from "../../store/authStore";
 
 export default function Signup() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, isLoading, register, token } = useAuthStore();
 
   const router = useRouter();
 
-  const handleSignUp = () => {};
+  const handleSignUp = async () => {
+    const result = await register(username, email, password);
+
+    if (!result.success) {
+      Alert.alert("Error", result.message);
+    }
+  };
+
+  console.log("user", user);
+  console.log("token", token);
 
   return (
     <KeyboardAvoidingView
@@ -33,7 +44,7 @@ export default function Signup() {
         <View style={styles.card}>
           {/* header */}
           <View style={styles.header}>
-            <Text style={styles.title}>BookWorm🐛</Text>
+            <Text style={styles.title}>ShelfShare 📚</Text>
             <Text style={styles.subtitle}>Share your favorite reads</Text>
           </View>
 
@@ -53,7 +64,7 @@ export default function Signup() {
                 {/* input area */}
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter your email"
+                  placeholder="Enter your username"
                   placeholderTextColor={COLORS.placeholderText}
                   value={username}
                   onChangeText={setUsername}

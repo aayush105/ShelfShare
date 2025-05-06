@@ -7,20 +7,26 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import React, { useState } from "react";
 import styles from "../../assets/styles/login.styles";
 import { Ionicons } from "@expo/vector-icons";
 import COLORS from "../../constants/colors";
 import { Link } from "expo-router";
+import { useAuthStore } from "../../store/authStore";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { isLoading, login } = useAuthStore();
 
-  const handleLogin = () => {};
+  const handleLogin = async () => {
+    const result = await login(email, password);
+
+    if (!result.success) Alert.alert("Error", result.message);
+  };
 
   return (
     <KeyboardAvoidingView
@@ -29,12 +35,14 @@ export default function Login() {
     >
       <View style={styles.container}>
         {/* illustration */}
-        <View>
+        <View style={styles.illustrationContainer}>
           <Image
-            source={require("../../assets/images/i.png")}
+            source={require("../../assets/images/i3.png")}
             style={styles.illustrationImage}
             resizeMode="contain"
           />
+          <Text style={styles.appName}>ShelfShare 📚</Text>
+          <Text style={styles.tagline}>Connect over your favorite books</Text>
         </View>
 
         <View style={styles.card}>
@@ -43,14 +51,12 @@ export default function Login() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email</Text>
               <View style={styles.inputContainer}>
-                {/* icon */}
                 <Ionicons
                   name="mail-outline"
                   size={20}
                   color={COLORS.primary}
                   style={styles.inputIcon}
                 />
-                {/* input area */}
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your email"
@@ -67,15 +73,12 @@ export default function Login() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password</Text>
               <View style={styles.inputContainer}>
-                {/* icon */}
                 <Ionicons
                   name="lock-closed-outline"
                   size={20}
                   color={COLORS.primary}
                   style={styles.inputIcon}
                 />
-
-                {/* input area */}
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your password"
@@ -88,7 +91,6 @@ export default function Login() {
                   onPress={() => setShowPassword(!showPassword)}
                   style={styles.eyeIcon}
                 >
-                  {/* icon */}
                   <Ionicons
                     name={showPassword ? "eye-outline" : "eye-off-outline"}
                     size={20}
@@ -110,7 +112,6 @@ export default function Login() {
               )}
             </TouchableOpacity>
 
-            {/* footer */}
             <View style={styles.footer}>
               <Text style={styles.footerText}>Don't have an account?</Text>
               <Link href="/signup" asChild>
