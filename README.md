@@ -107,7 +107,6 @@ The backend is located in the `backend` directory and uses Node.js with Express.
 - **`/books`** (defined in `bookRoutes.js`):
   - `GET /books`: Fetch all book recommendations (public).
   - `POST /books`: Add a new book recommendation (protected).
-  - `PUT /books/:id`: Update a book recommendation (protected).
   - `DELETE /books/:id`: Delete a book recommendation (protected).
 
 #### Steps to Run Backend
@@ -121,11 +120,19 @@ The backend is located in the `backend` directory and uses Node.js with Express.
    npm install
    ```
 3. Create a `.env` file in the `backend` directory with the following:
+
    ```
    MONGO_URI=your_mongodb_uri
    JWT_SECRET=your_jwt_secret
    PORT=5000
+
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+
+   API_URL=your_render.com_api_deployed_url
    ```
+
 4. Start the backend server:
    ```bash
    npm run dev
@@ -151,6 +158,7 @@ The frontend is located in the `mobile` directory and is built with React Native
   - **`(tabs)/`**: Tab-based navigation screens.
     - `index.jsx`: Home feed screen.
     - `profile.jsx`: User profile screen.
+    - `create.jsx`: Create a post.
   - **`assets/`**: Static assets (images, fonts, etc.).
   - **`components/`**: Reusable UI components.
     - `SafeScreen.jsx`: Wrapper for safe area handling.
@@ -179,27 +187,26 @@ The frontend is located in the `mobile` directory and is built with React Native
    ```bash
    npm install
    ```
-3. Create a `.env` file in the `mobile` directory with the following:
-   ```
-   EXPO_PUBLIC_API_URL=http://localhost:5000
-   ```
-4. Start the Expo project:
+   <!-- 3. Create a `.env` file in the `mobile` directory with the following:
+      ```
+      EXPO_PUBLIC_API_URL=http://localhost:5000
+      ``` -->
+3. Start the Expo project:
    ```bash
    npx expo start
    ```
-5. Scan the QR code with the Expo Go app on your mobile device, or run on an emulator:
+4. Scan the QR code with the Expo Go app on your mobile device, or run on an emulator:
    - Press `a` for Android emulator.
    - Press `i` for iOS simulator.
 
 ---
 
-## 📡 Connecting Frontend and Backend
+<!-- ## 📡 Connecting Frontend and Backend
 
 - Ensure the backend is running on `http://localhost:5000`.
-- The frontend uses the `EXPO_PUBLIC_API_URL` environment variable to connect to the backend.
 - On physical devices, replace `localhost` with your machine's IP address in the `.env` file (e.g., `http://192.168.1.x:5000`).
 
----
+--- -->
 
 ## 🛠️ Development Notes
 
@@ -210,6 +217,6 @@ The frontend is located in the `mobile` directory and is built with React Native
 
 ---
 
-## 📜 License
+<!-- ## 📜 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. -->

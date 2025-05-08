@@ -16,11 +16,12 @@ export default StyleSheet.create({
     width: 200,
     height: 200,
   },
-  appName: {
+  title: {
     fontSize: 32,
-    fontWeight: "bold",
+    fontWeight: "700",
+    fontFamily: "SpaceMono-Regular",
     color: COLORS.primary,
-    // marginTop: 10,
+    // marginBottom: 8,
   },
   tagline: {
     fontSize: 16,

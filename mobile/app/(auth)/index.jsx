@@ -20,13 +20,15 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { isLoading, login } = useAuthStore();
+  const { isLoading, login, isCheckingAuth } = useAuthStore();
 
   const handleLogin = async () => {
     const result = await login(email, password);
 
     if (!result.success) Alert.alert("Error", result.message);
   };
+
+  if (isCheckingAuth) return null;
 
   return (
     <KeyboardAvoidingView
@@ -41,7 +43,7 @@ export default function Login() {
             style={styles.illustrationImage}
             resizeMode="contain"
           />
-          <Text style={styles.appName}>ShelfShare 📚</Text>
+          <Text style={styles.title}>ShelfShare 📚</Text>
           <Text style={styles.tagline}>Connect over your favorite books</Text>
         </View>
 

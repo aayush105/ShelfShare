@@ -1,4 +1,3 @@
-// styles/signup.styles.js
 import { StyleSheet } from "react-native";
 import COLORS from "../../constants/colors";
 
@@ -28,7 +27,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: "700",
-    fontFamily: "JetBrainsMono-Medium",
+    fontFamily: "SpaceMono-Regular",
     color: COLORS.primary,
     marginBottom: 8,
   },

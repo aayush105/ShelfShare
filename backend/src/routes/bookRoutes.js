@@ -9,9 +9,11 @@ const router = express.Router();
 // yaha protectRoute use gareko xa, to make sure its protected and only the authenticated user who have the token can post it
 router.post("/", protectRoute, async (req, res) => {
   try {
-    const { title, author, description, image } = req.body;
+    const { title, rating, caption, image } = req.body;
 
-    if (!title || !author || !description || !image) {
+    console.log("req.body", req.body); // log the request body for debugging
+
+    if (!title || !rating || !caption || !image) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -22,8 +24,8 @@ router.post("/", protectRoute, async (req, res) => {
     // save to the db
     const newBook = new Book({
       title,
-      author,
-      description,
+      rating,
+      caption,
       image: imageUrl,
       user: req.user._id, // attach the user id from the token
     });

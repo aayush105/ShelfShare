@@ -61,6 +61,7 @@ router.post("/register", async (req, res) => {
         email: user.email,
         username: user.username,
         profileImage: user.profileImage,
+        createdAt: user.createdAt,
       },
     });
   } catch (error) {
@@ -96,6 +97,7 @@ router.post("/login", async (req, res) => {
         email: user.email,
         username: user.username,
         profileImage: user.profileImage,
+        createdAt: user.createdAt,
       },
     });
   } catch (error) {
