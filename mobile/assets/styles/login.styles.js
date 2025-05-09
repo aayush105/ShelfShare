@@ -8,6 +8,7 @@ export default StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   illustrationContainer: {
     alignItems: "center",
     marginBottom: 10,
@@ -17,9 +18,8 @@ export default StyleSheet.create({
     height: 200,
   },
   title: {
-    fontSize: 32,
-    fontWeight: "700",
-    fontFamily: "SpaceMono-Regular",
+    fontSize: 28,
+    fontFamily: "JetBrainsMono-Medium",
     color: COLORS.primary,
     // marginBottom: 8,
   },

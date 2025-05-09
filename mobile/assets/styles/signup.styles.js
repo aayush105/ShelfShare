@@ -25,9 +25,8 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   title: {
-    fontSize: 32,
-    fontWeight: "700",
-    fontFamily: "SpaceMono-Regular",
+    fontSize: 28,
+    fontFamily: "JetBrainsMono-Medium",
     color: COLORS.primary,
     marginBottom: 8,
   },

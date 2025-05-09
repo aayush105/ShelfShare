@@ -17,7 +17,7 @@ export default function RootLayout() {
   const { checkAuth, user, token } = useAuthStore();
 
   const [fontLoaded] = useFonts({
-    "SpaceMono-Regular": require("../assets/fonts/SpaceMono-Regular.ttf"),
+    "JetBrainsMono-Medium": require("../assets/fonts/JetBrainsMono-Medium.ttf"),
   });
 
   useEffect(() => {

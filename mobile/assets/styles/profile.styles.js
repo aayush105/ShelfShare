@@ -15,6 +15,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: COLORS.background,
   },
+
   profileHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -115,11 +116,30 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "space-between",
   },
+  titleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+    flexWrap: "wrap",
+  },
   bookTitle: {
     fontSize: 16,
     fontWeight: "600",
     color: COLORS.textPrimary,
-    marginBottom: 4,
+    marginRight: 2,
+  },
+  genreTag: {
+    backgroundColor: COLORS.inputBackground,
+    borderRadius: 5,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  genreTagText: {
+    fontSize: 10,
+    color: COLORS.primary,
+    fontWeight: "500",
   },
   ratingContainer: {
     flexDirection: "row",

@@ -1,42 +1,131 @@
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   FlatList,
   ActivityIndicator,
   RefreshControl,
+  ScrollView,
+  Animated, // Add Animated
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react"; // Add useRef
 import COLORS from "../../constants/colors";
 import styles from "../../assets/styles/home.styles";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuthStore } from "../../store/authStore";
 import { API_URL } from "../../constants/api";
 import { Image } from "expo-image";
 import { formatPublishDate } from "../../lib/utils";
 import Loader from "../../components/Loader";
+import ErrorComponent from "../../components/ErrorComponent";
+
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function Home() {
   const { token } = useAuthStore();
   const [books, setBooks] = useState([]);
+  const [genres, setGenres] = useState([]);
+  const [selectedGenre, setSelectedGenre] = useState("All");
+  const [initialLoading, setInitialLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Animation-related state
+  const scrollY = useRef(new Animated.Value(0)).current; // Track scroll position
+  const genreSectionRef = useRef(null); // Reference to genre section
+  const [genreSectionOffset, setGenreSectionOffset] = useState(0); // Offset of genre section
+  const stickyHeaderOpacity = useRef(new Animated.Value(0)).current; // Opacity for sticky header animation
+
+  // Fetch genres and initial books on mount
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        setInitialLoading(true);
+        setError(null);
+
+        const genresResponse = await fetch(`${API_URL}/books/active-genres`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const genresData = await genresResponse.json();
+        if (!genresResponse.ok) {
+          throw new Error(
+            genresData.message || "Failed to fetch active genres"
+          );
+        }
+        setGenres(["All", ...genresData]);
+
+        const booksResponse = await fetch(`${API_URL}/books?page=1&limit=2`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const booksData = await booksResponse.json();
+        if (!booksResponse.ok) {
+          throw new Error(booksData.message || "Failed to fetch books");
+        }
+
+        setBooks(booksData.books);
+        setHasMore(1 < booksData.totalPages);
+        setPage(2);
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+        setError(error.message || "Something went wrong while fetching data");
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    fetchInitialData();
+  }, [token]);
+
+  // Measure genre section position after layout
+  useEffect(() => {
+    if (genreSectionRef.current) {
+      genreSectionRef.current.measure((x, y, width, height, pageX, pageY) => {
+        setGenreSectionOffset(pageY); // Store the Y offset of the genre section
+      });
+    }
+  }, [initialLoading]);
+
+  // Animate sticky header based on scroll position
+  useEffect(() => {
+    const listener = scrollY.addListener(({ value }) => {
+      // Show sticky header when scrolling past genre section
+      if (value > genreSectionOffset) {
+        Animated.timing(stickyHeaderOpacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+      } else {
+        Animated.timing(stickyHeaderOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+      }
+    });
+
+    return () => scrollY.removeListener(listener);
+  }, [scrollY, genreSectionOffset]);
 
   const fetchBooks = async (pageNum = 1, refresh = false) => {
+    if (loading || (!hasMore && !refresh)) return;
+
     try {
       if (refresh) setRefreshing(true);
-      else if (pageNum === 1) setLoading(true);
+      else if (pageNum !== 1) setLoading(true);
+      setError(null);
 
-      const response = await fetch(`${API_URL}/books?page=${pageNum}&limit=2`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const url =
+        selectedGenre === "All"
+          ? `${API_URL}/books?page=${pageNum}&limit=2`
+          : `${API_URL}/books/genre/${selectedGenre}?page=${pageNum}&limit=2`;
+
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const data = await response.json();
@@ -45,10 +134,6 @@ export default function Home() {
         throw new Error(data.message || "Failed to fetch books");
       }
 
-      // todo fix it later (issue multiple books rendered of same keys)
-      // setBooks((prevBooks) => [...prevBooks, ...data.books]);
-
-      // fixed it by this way
       const uniqueBooks =
         refresh || pageNum === 1
           ? data.books
@@ -59,11 +144,11 @@ export default function Home() {
             );
 
       setBooks(uniqueBooks);
-
       setHasMore(pageNum < data.totalPages);
-      setPage(pageNum);
+      setPage(pageNum + 1);
     } catch (error) {
       console.error("Error fetching books:", error);
+      setError(error.message || "Something went wrong while fetching books");
     } finally {
       if (refresh) {
         await sleep(400);
@@ -71,24 +156,37 @@ export default function Home() {
       } else {
         setLoading(false);
       }
-      // else if (pageNum === 1) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchBooks();
-  }, []);
-
-  // console.log("books", books);
+    if (!initialLoading) {
+      fetchBooks(1, true);
+    }
+  }, [selectedGenre]);
 
   const handleLoadMore = async () => {
-    if (!loading && hasMore && !refreshing) {
-      await fetchBooks(page + 1);
+    if (!loading && !initialLoading && hasMore && !refreshing) {
+      await fetchBooks(page);
     }
   };
 
-  if (loading) {
+  const handleInitialRetry = () => {
+    setError(null);
+    setInitialLoading(true);
+    useEffect();
+  };
+
+  const handleBooksRetry = () => {
+    fetchBooks(1, true);
+  };
+
+  if (initialLoading) {
     return <Loader />;
+  }
+
+  if (error && !books.length && !genres.length) {
+    return <ErrorComponent message={error} onRetry={handleInitialRetry} />;
   }
 
   const renderItem = ({ item }) => (
@@ -110,11 +208,20 @@ export default function Home() {
         />
       </View>
       <View style={styles.bookDetails}>
-        <Text style={styles.bookTitle}>{item.title}</Text>
+        <View style={styles.titleContainer}>
+          <Text style={styles.bookTitle} numberOfLines={1}>
+            {item.title}
+          </Text>
+          <View style={styles.genreTag}>
+            <Text style={styles.genreTagText}>{item.genre}</Text>
+          </View>
+        </View>
         <View style={styles.ratingContainer}>
           {renderRatingStars(item.rating)}
         </View>
-        <Text style={styles.caption}>{item.caption}</Text>
+        <Text style={styles.caption} numberOfLines={2}>
+          {item.caption}
+        </Text>
         <Text style={styles.date}>
           Shared on {formatPublishDate(item.createdAt)}
         </Text>
@@ -122,9 +229,30 @@ export default function Home() {
     </View>
   );
 
+  const renderGenre = ({ item }) => (
+    <View style={styles.genreBadgeContainer}>
+      <View
+        style={[
+          styles.genreBadge,
+          selectedGenre === item && styles.genreBadgeSelected,
+        ]}
+        onStartShouldSetResponder={() => true}
+        onResponderRelease={() => setSelectedGenre(item)}
+      >
+        <Text
+          style={[
+            styles.genreBadgeText,
+            selectedGenre === item && styles.genreBadgeTextSelected,
+          ]}
+        >
+          {item}
+        </Text>
+      </View>
+    </View>
+  );
+
   const renderRatingStars = (rating) => {
     const stars = [];
-
     for (let i = 1; i <= 5; i++) {
       stars.push(
         <Ionicons
@@ -136,13 +264,48 @@ export default function Home() {
         />
       );
     }
-
     return <View style={styles.ratingContainer}>{stars}</View>;
   };
 
+  // Render sticky header
+  const renderStickyHeader = () => (
+    <Animated.View
+      style={[
+        styles.stickyHeader,
+        {
+          opacity: stickyHeaderOpacity,
+          transform: [
+            {
+              translateY: stickyHeaderOpacity.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-20, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      <View style={styles.stickyHeaderContent}>
+        <Image
+          source={require("../../assets/images/shelfshare-logo.png")}
+          style={styles.stickyLogo}
+        />
+        <FlatList
+          data={genres}
+          renderItem={renderGenre}
+          keyExtractor={(item) => item}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.genreScrollContent}
+        />
+      </View>
+    </Animated.View>
+  );
+
   return (
     <View style={styles.container}>
-      <FlatList
+      {renderStickyHeader()}
+      <AnimatedFlatList
         data={books}
         renderItem={renderItem}
         keyExtractor={(item) => item._id}
@@ -150,6 +313,11 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.1}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -159,15 +327,49 @@ export default function Home() {
           />
         }
         ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>ShelfShare 📚</Text>
-            <Text style={styles.headerSubtitle}>
-              Discover great reads from the community👇
-            </Text>
-          </View>
+          <>
+            <View style={styles.header}>
+              {/* <Image
+                source={require("../../assets/images/shelfshare-logo.png")}
+                style={styles.logo}
+              /> */}
+              <Text style={styles.headerTitle}>ShelfShare 📚</Text>
+              <Text style={styles.headerSubtitle}>
+                Discover great reads from the community👇
+              </Text>
+            </View>
+            <View
+              ref={genreSectionRef}
+              onLayout={() => {
+                genreSectionRef.current.measure(
+                  (x, y, width, height, pageX, pageY) => {
+                    setGenreSectionOffset(pageY);
+                  }
+                );
+              }}
+            >
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.genreScrollContent}
+                style={styles.genreScroll}
+              >
+                <FlatList
+                  data={genres}
+                  renderItem={renderGenre}
+                  keyExtractor={(item) => item}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                />
+              </ScrollView>
+            </View>
+            {error && (
+              <ErrorComponent message={error} onRetry={handleBooksRetry} />
+            )}
+          </>
         }
         ListFooterComponent={
-          hasMore && books.length > 0 ? (
+          hasMore && books.length > 0 && !refreshing ? (
             <ActivityIndicator
               style={styles.footerLoader}
               size="small"
@@ -176,17 +378,25 @@ export default function Home() {
           ) : null
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons
-              name="book-outline"
-              size={60}
-              color={COLORS.textSecondary}
-            />
-            <Text style={styles.emptyText}>No recommendations yet</Text>
-            <Text style={styles.emptySubtitle}>
-              Be the first to share your favorite book!
-            </Text>
-          </View>
+          !error && (
+            <View style={styles.emptyContainer}>
+              <Ionicons
+                name="book-outline"
+                size={60}
+                color={COLORS.textSecondary}
+              />
+              <Text style={styles.emptyText}>
+                {selectedGenre === "All"
+                  ? "No recommendations yet"
+                  : `No books found in ${selectedGenre}`}
+              </Text>
+              <Text style={styles.emptySubtitle}>
+                {selectedGenre === "All"
+                  ? "Be the first to share your favorite book!"
+                  : "Share a book in this genre to get started!"}
+              </Text>
+            </View>
+          )
         }
       />
     </View>

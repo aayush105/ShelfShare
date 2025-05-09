@@ -114,7 +114,15 @@ export default function Profile() {
     <View style={styles.bookItem}>
       <Image source={item.image} style={styles.bookImage} />
       <View style={styles.bookInfo}>
-        <Text style={styles.bookTitle}>{item.title}</Text>
+        <View style={styles.titleContainer}>
+          <Text style={styles.bookTitle} numberOfLines={1}>
+            {item.title}
+          </Text>
+          <View style={styles.genreTag}>
+            <Text style={styles.genreTagText}>{item.genre}</Text>
+          </View>
+        </View>
+        {/* <Text style={styles.bookTitle}>{item.title}</Text> */}
         <View style={styles.ratingContainer}>
           {renderRatingStars(item.rating)}
         </View>
