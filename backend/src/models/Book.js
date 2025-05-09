@@ -20,7 +20,11 @@ const bookSchema = new mongoose.Schema(
       min: 1,
       max: 5,
     },
-
+    // Add genre field with predefined options
+    genre: {
+      type: String,
+      required: true,
+    },
     // user lai reference garne to get the info about the user who created the book
     user: {
       type: mongoose.Schema.Types.ObjectId,
