@@ -136,6 +136,48 @@ const styles = StyleSheet.create({
   buttonIcon: {
     marginRight: 8,
   },
+  pickerContainer: {
+    backgroundColor: COLORS.inputBackground,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: "hidden",
+    borderColor: COLORS.border,
+    paddingHorizontal: 12,
+  },
+  picker: {
+    height: 50,
+    color: COLORS.textDark,
+  },
+  pickerItem: {
+    fontSize: 12,
+    color: COLORS.textDark,
+  },
+  toggleContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 5,
+    marginHorizontal: 5,
+  },
+  toggleButtonActive: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  toggleButtonText: {
+    fontSize: 16,
+    color: COLORS.textPrimary,
+  },
+  toggleButtonTextActive: {
+    color: COLORS.white,
+    fontWeight: "bold",
+  },
 });
 
 export default styles;
