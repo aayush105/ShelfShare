@@ -5,9 +5,9 @@ import {
   ActivityIndicator,
   RefreshControl,
   ScrollView,
-  Animated, // Add Animated
+  Animated,
 } from "react-native";
-import React, { useEffect, useState, useRef } from "react"; // Add useRef
+import React, { useEffect, useState, useRef } from "react";
 import COLORS from "../../constants/colors";
 import styles from "../../assets/styles/home.styles";
 import { Ionicons } from "@expo/vector-icons";
@@ -35,56 +35,59 @@ export default function Home() {
   const [error, setError] = useState(null);
 
   // Animation-related state
-  const scrollY = useRef(new Animated.Value(0)).current; // Track scroll position
-  const genreSectionRef = useRef(null); // Reference to genre section
-  const [genreSectionOffset, setGenreSectionOffset] = useState(0); // Offset of genre section
-  const stickyHeaderOpacity = useRef(new Animated.Value(0)).current; // Opacity for sticky header animation
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const genreSectionRef = useRef(null);
+  const [genreSectionOffset, setGenreSectionOffset] = useState(0);
+  const stickyHeaderOpacity = useRef(new Animated.Value(0)).current;
+
+  const fetchInitialData = async (isInitial = true) => {
+    if (!token) {
+      if (isInitial) setInitialLoading(false);
+      return;
+    }
+
+    if (isInitial) setInitialLoading(true);
+    setError(null);
+
+    try {
+      const genresResponse = await fetch(`${API_URL}/books/active-genres`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const genresData = await genresResponse.json();
+      if (!genresResponse.ok) {
+        throw new Error(genresData.message || "Failed to fetch active genres");
+      }
+      setGenres(["All", ...genresData]);
+
+      const booksResponse = await fetch(`${API_URL}/books?page=1&limit=2`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const booksData = await booksResponse.json();
+      if (!booksResponse.ok) {
+        throw new Error(booksData.message || "Failed to fetch books");
+      }
+
+      setBooks(booksData.books);
+      setHasMore(1 < booksData.totalPages);
+      setPage(2);
+    } catch (error) {
+      console.error("Error fetching initial data:", error);
+      setError(error.message || "Something went wrong while fetching data");
+    } finally {
+      if (isInitial) setInitialLoading(false);
+    }
+  };
 
   // Fetch genres and initial books on mount
   useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        setInitialLoading(true);
-        setError(null);
-
-        const genresResponse = await fetch(`${API_URL}/books/active-genres`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const genresData = await genresResponse.json();
-        if (!genresResponse.ok) {
-          throw new Error(
-            genresData.message || "Failed to fetch active genres"
-          );
-        }
-        setGenres(["All", ...genresData]);
-
-        const booksResponse = await fetch(`${API_URL}/books?page=1&limit=2`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const booksData = await booksResponse.json();
-        if (!booksResponse.ok) {
-          throw new Error(booksData.message || "Failed to fetch books");
-        }
-
-        setBooks(booksData.books);
-        setHasMore(1 < booksData.totalPages);
-        setPage(2);
-      } catch (error) {
-        console.error("Error fetching initial data:", error);
-        setError(error.message || "Something went wrong while fetching data");
-      } finally {
-        setInitialLoading(false);
-      }
-    };
-
-    fetchInitialData();
+    fetchInitialData(true);
   }, [token]);
 
   // Measure genre section position after layout
   useEffect(() => {
     if (genreSectionRef.current) {
       genreSectionRef.current.measure((x, y, width, height, pageX, pageY) => {
-        setGenreSectionOffset(pageY); // Store the Y offset of the genre section
+        setGenreSectionOffset(pageY);
       });
     }
   }, [initialLoading]);
@@ -92,7 +95,6 @@ export default function Home() {
   // Animate sticky header based on scroll position
   useEffect(() => {
     const listener = scrollY.addListener(({ value }) => {
-      // Show sticky header when scrolling past genre section
       if (value > genreSectionOffset) {
         Animated.timing(stickyHeaderOpacity, {
           toValue: 1,
@@ -114,11 +116,11 @@ export default function Home() {
   const fetchBooks = async (pageNum = 1, refresh = false) => {
     if (loading || (!hasMore && !refresh)) return;
 
-    try {
-      if (refresh) setRefreshing(true);
-      else if (pageNum !== 1) setLoading(true);
-      setError(null);
+    if (refresh) setRefreshing(true);
+    else if (pageNum !== 1) setLoading(true);
+    setError(null);
 
+    try {
       const url =
         selectedGenre === "All"
           ? `${API_URL}/books?page=${pageNum}&limit=2`
@@ -174,7 +176,7 @@ export default function Home() {
   const handleInitialRetry = () => {
     setError(null);
     setInitialLoading(true);
-    useEffect();
+    fetchInitialData(true);
   };
 
   const handleBooksRetry = () => {
@@ -267,7 +269,7 @@ export default function Home() {
     return <View style={styles.ratingContainer}>{stars}</View>;
   };
 
-  // Render sticky header
+  // render sticky header
   const renderStickyHeader = () => (
     <Animated.View
       style={[
@@ -321,7 +323,13 @@ export default function Home() {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={() => fetchBooks(1, true)}
+            onRefresh={async () => {
+              setRefreshing(true); // Manually set refreshing state
+              await fetchBooks(1, true); // Fetch books first
+              // Only fetch genres if needed (e.g., if they might have changed)
+              await fetchInitialData(false); // Pass false to avoid initialLoading
+              setRefreshing(false); // Reset refreshing state
+            }}
             colors={[COLORS.primary]}
             tintColor={COLORS.primary}
           />
@@ -329,40 +337,38 @@ export default function Home() {
         ListHeaderComponent={
           <>
             <View style={styles.header}>
-              {/* <Image
-                source={require("../../assets/images/shelfshare-logo.png")}
-                style={styles.logo}
-              /> */}
               <Text style={styles.headerTitle}>ShelfShare 📚</Text>
               <Text style={styles.headerSubtitle}>
                 Discover great reads from the community👇
               </Text>
             </View>
-            <View
-              ref={genreSectionRef}
-              onLayout={() => {
-                genreSectionRef.current.measure(
-                  (x, y, width, height, pageX, pageY) => {
-                    setGenreSectionOffset(pageY);
-                  }
-                );
-              }}
-            >
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.genreScrollContent}
-                style={styles.genreScroll}
+            {(books.length > 0 || genres.length > 1) && (
+              <View
+                ref={genreSectionRef}
+                onLayout={() => {
+                  genreSectionRef.current.measure(
+                    (x, y, width, height, pageX, pageY) => {
+                      setGenreSectionOffset(pageY);
+                    }
+                  );
+                }}
               >
-                <FlatList
-                  data={genres}
-                  renderItem={renderGenre}
-                  keyExtractor={(item) => item}
+                <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                />
-              </ScrollView>
-            </View>
+                  contentContainerStyle={styles.genreScrollContent}
+                  style={styles.genreScroll}
+                >
+                  <FlatList
+                    data={genres}
+                    renderItem={renderGenre}
+                    keyExtractor={(item) => item}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                  />
+                </ScrollView>
+              </View>
+            )}
             {error && (
               <ErrorComponent message={error} onRetry={handleBooksRetry} />
             )}

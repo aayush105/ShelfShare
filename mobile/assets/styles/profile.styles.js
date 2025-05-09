@@ -94,23 +94,22 @@ const styles = StyleSheet.create({
   },
   bookItem: {
     flexDirection: "row",
-    backgroundColor: COLORS.cardBackground,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 1 },
+    alignItems: "center",
+    padding: 10,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginBottom: 10,
+    elevation: 2, // for Android shadow
+    shadowColor: "#000", // for iOS shadow
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: COLORS.border,
   },
   bookImage: {
-    width: 70,
-    height: 100,
+    width: 80,
+    height: 120,
     borderRadius: 8,
-    marginRight: 12,
+    marginRight: 10,
   },
   bookInfo: {
     flex: 1,
@@ -149,7 +148,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textDark,
     marginBottom: 4,
-    flex: 1,
+    flexShrink: 1,
   },
   bookDate: {
     fontSize: 12,
