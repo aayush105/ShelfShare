@@ -232,18 +232,16 @@ router.get("/", protectRoute, async (req, res) => {
 
     const totalBooks = await Book.countDocuments(); // get the total number of books
 
+    if (!books) {
+      return res.status(404).json({ message: "No books found" });
+    }
+
     res.send({
       books,
       currentPage: page,
       totalBooks,
       totalPages: Math.ceil(totalBooks / limit), // calculate the total number of pages
     });
-
-    if (!books) {
-      return res.status(404).json({ message: "No books found" });
-    }
-
-    res.status(200).json(books);
   } catch (error) {
     console.error("Error in get all books route", error);
     res.status(500).json({ message: "Internal Server error" });
